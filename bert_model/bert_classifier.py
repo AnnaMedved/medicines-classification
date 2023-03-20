@@ -2,15 +2,20 @@ import numpy as np
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
 from torch.utils.data import Dataset, DataLoader
-from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers import AdamW, get_linear_schedule_with_warmup, AutoTokenizer, AutoModelForPreTraining
 
 from bert_dataset import CustomDataset
 
 class BertClassifier:
 
-    def __init__(self, model_path, tokenizer_path, n_classes=2, epochs=1, model_save_path='/content/bert.pt'):
-        self.model = BertForSequenceClassification.from_pretrained(model_path)
-        self.tokenizer = BertTokenizer.from_pretrained(tokenizer_path)
+    def __init__(self, model_path, tokenizer_path, n_classes=8, epochs=100, model_save_path='bert.pt'):
+
+        # self.model = BertForSequenceClassification.from_pretrained(model_path)
+        # self.tokenizer = BertTokenizer.from_pretrained(tokenizer_path)
+
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        self.model = AutoModelForPreTraining.from_pretrained(model_path)
+
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model_save_path=model_save_path
         self.max_len = 512
@@ -105,9 +110,9 @@ class BertClassifier:
             print(f'Val loss {val_loss} accuracy {val_acc}')
             print('-' * 10)
 
-            if val_acc > best_accuracy:
-                torch.save(self.model, self.model_save_path)
-                best_accuracy = val_acc
+            # if val_acc > best_accuracy:
+            torch.save(self.model, self.model_save_path)
+            best_accuracy = val_acc
 
         self.model = torch.load(self.model_save_path)
     
