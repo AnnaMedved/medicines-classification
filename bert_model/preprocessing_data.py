@@ -106,7 +106,8 @@ def all_preprocessing(df: pd.DataFrame, feature_column: str):
         )
 
     # ============================== CHECKPOINT =============================
-    checkpoint_file('data/rls_stemmed.csv')
+    saved = checkpoint_file('data/data_stemmed.csv')
+    # =======================================================================
     
     # Lemmatized column only: 
     return df
@@ -115,7 +116,8 @@ def all_preprocessing(df: pd.DataFrame, feature_column: str):
 if __name__ == '__main__': 
 
     df = pd.read_excel('bert_model/data/data.xlsx')
-    df_preprocessed = all_preprocessing(df)
+    # print(df.columns)
+    df_preprocessed = all_preprocessing(df, feature_column='Правило взаимодействия (обр.)') 
 
     print('Working folder is ', os.getcwd())
     
