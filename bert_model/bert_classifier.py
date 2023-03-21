@@ -10,11 +10,11 @@ class BertClassifier:
 
     def __init__(self, model_path, tokenizer_path, n_classes=8, epochs=100, model_save_path='bert.pt'):
 
-        # self.model = BertForSequenceClassification.from_pretrained(model_path)
-        # self.tokenizer = BertTokenizer.from_pretrained(tokenizer_path)
+        self.model = BertForSequenceClassification.from_pretrained(model_path)
+        self.tokenizer = BertTokenizer.from_pretrained(tokenizer_path)
 
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-        self.model = AutoModelForPreTraining.from_pretrained(model_path)
+        # self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        # self.model = AutoModelForPreTraining.from_pretrained(model_path)
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model_save_path=model_save_path
@@ -57,8 +57,8 @@ class BertClassifier:
                 attention_mask=attention_mask
                 )
 
-            preds = torch.argmax(outputs.logits, dim=1)
-            loss = self.loss_fn(outputs.logits, targets)
+            preds = torch.argmax(outputs[0], dim=1)
+            loss = self.loss_fn(outputs[0], targets)
 
             correct_predictions += torch.sum(preds == targets)
 
