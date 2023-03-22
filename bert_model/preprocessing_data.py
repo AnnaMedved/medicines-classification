@@ -2,6 +2,11 @@ import os
 import string
 import pandas as pd 
 
+import pandas as pd
+import numpy as np
+import string
+import nltk
+
 from nltk.stem.snowball import SnowballStemmer 
 from tqdm.auto import tqdm, trange
 from nltk.stem import *
@@ -65,59 +70,98 @@ def get_removed_sw(df, prep_col, stopwords_list):
 def checkpoint_file(df, file_name): 
     return df.to_csv(file_name)
 
-# def lemmatize_text(text):
-#     return text
+def lemmatize_text(df: pd.DataFrame, column_to_lemm: str, stopwords):
 
-def all_preprocessing(df: pd.DataFrame, feature_column: str):
+    mystem = Mystem() 
+    lemm_texts_list = []
+    for text in tqdm(df[column_to_lemm]):
+        try:
+            text_lem = mystem.lemmatize(text)
+            tokens = [
+                token for token in text_lem 
+                if token != ' ' and token not in stopwords
+                ]
+            text = " ".join(tokens)
+            lemm_texts_list.append(text)
+        except Exception as e:
+            print(e)
 
-    df = df.copy()
-    # Removing punctuation, numbers, multiple spaces:
-    preproccessing = lambda text: (remove_multiple_spaces(
-        remove_numbers(remove_punctuation(text))
-        ))
-    # Adding column in initial table: 
-    df['preproccessed'] = list(map(preproccessing, df[feature_column]))
+    return text
 
-    # Prep for next steps: 
-    prep_text = [
-        remove_multiple_spaces(remove_numbers(remove_punctuation(
-                                                            text.lower()
-                                                        )))
-        for text in tqdm(df[feature_column])
-        ]
-    df['prep_text'] = prep_text
+def loading_data(data_name: str) -> pd.DataFrame: 
+    """Check and load your data"""
 
-    stemmer = SnowballStemmer("russian") 
-    russian_stopwords = stopwords.words("russian")
-    russian_stopwords.extend(['…', '«', '»', '...', 'т.д.', 'т', 'д'])
+    if data_name.endswith('.xlsx'): 
+        df = pd.read_excel(data_name)
 
-    # Text stemming: 
-    df['text_stem'] = stemm_text(
-        df=df, 
-        column_to_step='prep_text', 
-        stopwords_list=russian_stopwords,
-        stemmer=stemmer
-          )
-    
-    # Text removing stop words: 
-    df['text_sw'] = get_removed_sw(
-        df=df, prep_col='prep_text', 
-        stopwords_list=russian_stopwords
+    elif data_name.endswith('.csv'): 
+        df = pd.read_csv(data_name)
+
+    return df 
+
+def all_preprocessing(data_name: str, feature_columns: list):
+
+    df = loading_data(data_name)
+    features = [] # name of preprocessed columns to predict
+
+    for num, feature_column in enumerate(feature_columns): 
+        # # Removing punctuation, numbers, multiple spaces:
+        # preproccessing = lambda text: (remove_multiple_spaces(
+        #     remove_numbers(remove_punctuation(text))
+        #     ))
+        # # Adding column in initial table: 
+        # df[f'preproccessed_{num}'] = list(map(
+        #     preproccessing, df[feature_column]
+        #     ))
+
+        # Prep for next steps: 
+        prep_text = [
+            remove_multiple_spaces(
+            remove_numbers(
+            remove_punctuation(text.lower())))
+            for text in tqdm(df[feature_column])
+            ]
+        df[f'prep_text_{num}'] = prep_text
+
+        stemmer = SnowballStemmer("russian") 
+        russian_stopwords = stopwords.words("russian")
+        russian_stopwords.extend(['•', '…', '«', '»', '...', 'т.д.', 'т', 'д'])
+
+        # Text stemming: 
+        df[f'text_stem_{num}'] = stemm_text(
+            df=df, 
+            column_to_stem=f'prep_text_{num}', 
+            stopwords_list=russian_stopwords,
+            stemmer=stemmer
+            )
+        
+        # Text removing stop words: 
+        df[f'text_sw_{num}'] = get_removed_sw(
+            df=df, prep_col=f'text_stem_{num}', 
+            stopwords_list=russian_stopwords
+            )
+        
+        df[f'lemm_{num}'] = lemmatize_text(
+            df=df,
+            column_to_lemm=f'text_sw_{num}', 
+            stopwords=russian_stopwords
         )
+        
+        features.append(f'text_sw_{num}')
 
     # ============================== CHECKPOINT =============================
-    saved = checkpoint_file('data/data_stemmed.csv')
+    saved = checkpoint_file(df=df, file_name='data_stemmed.csv')
     # =======================================================================
     
     # Lemmatized column only: 
-    return df
+    return df, features 
 
 
-if __name__ == '__main__': 
+# if __name__ == '__main__': 
 
-    df = pd.read_excel('bert_model/data/data.xlsx')
-    # print(df.columns)
-    df_preprocessed = all_preprocessing(df, feature_column='Правило взаимодействия (обр.)') 
+    
+#     # print(df.columns)
+#     df_preprocessed = all_preprocessing(df, feature_column='Правило взаимодействия (обр.)') 
 
-    print('Working folder is ', os.getcwd())
+#     print('Working folder is ', os.getcwd())
     
