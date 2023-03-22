@@ -8,6 +8,7 @@ import string
 import nltk
 from nltk.corpus import stopwords
 nltk.download("stopwords")
+nltk.download('punkt')
 
 from nltk.stem.snowball import SnowballStemmer 
 from tqdm.auto import tqdm, trange
@@ -88,7 +89,7 @@ def lemmatize_text(df: pd.DataFrame, column_to_lemm: str, stopwords):
         except Exception as e:
             print(e)
 
-    return text
+    return lemm_texts_list
 
 def loading_data(data_name: str) -> pd.DataFrame: 
     """Check and load your data"""

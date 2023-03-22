@@ -4,7 +4,7 @@ from transformers import BertTokenizer, BertForSequenceClassification
 from torch.utils.data import Dataset, DataLoader
 from transformers import AdamW, get_linear_schedule_with_warmup, AutoTokenizer, AutoModelForPreTraining
 
-from bert_dataset import CustomDataset
+from bert_model.bert_dataset import CustomDataset
 
 class BertClassifier:
 
@@ -145,3 +145,6 @@ class BertClassifier:
         prediction = torch.argmax(outputs.logits, dim=1).cpu().numpy()[0]
 
         return prediction
+
+    def load_pretrained(self, model_path): 
+        self.model = torch.load(model_path)
