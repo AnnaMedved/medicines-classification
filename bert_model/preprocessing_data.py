@@ -6,6 +6,8 @@ import pandas as pd
 import numpy as np
 import string
 import nltk
+from nltk.corpus import stopwords
+nltk.download("stopwords")
 
 from nltk.stem.snowball import SnowballStemmer 
 from tqdm.auto import tqdm, trange
