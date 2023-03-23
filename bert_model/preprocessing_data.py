@@ -1,6 +1,7 @@
 import os 
 import string
 import pandas as pd 
+import unicodedata
 
 import pandas as pd
 import numpy as np
@@ -23,26 +24,13 @@ import re
 from itertools import chain 
 
 
-def remove_punctuation(text):
-    return "".join(
-        [ch if ch not in string.punctuation else ' ' for ch in text]
-        )
-
-def remove_numbers(text):
-    return ''.join([i if not i.isdigit() else ' ' for i in text])
-
-def remove_multiple_spaces(text):
-	return re.sub(r'\s+', ' ', text, flags=re.I)
-
-def stemm_text(df, column_to_stem, stopwords_list, stemmer): 
+def stemm_text(df, col, stemmer): 
 
     stemmed_texts_list = []
-    for text in tqdm(df[column_to_stem]):
+
+    for text in tqdm(df[col]):
         tokens = word_tokenize(text)    
-        stemmed_tokens = [
-            stemmer.stem(token) 
-            for token in tokens if token not in stopwords_list
-            ]
+        stemmed_tokens = [stemmer.stem(token) for token in tokens]
         text = " ".join(stemmed_tokens)
         stemmed_texts_list.append(text)
     
@@ -57,14 +45,11 @@ def remove_stop_words(text, stopwords_list):
 
     return " ".join(tokens)
 
-def get_removed_sw(df, prep_col, stopwords_list): 
+def word_tokenizing(df, prep_col): 
     sw_texts_list = []
     for text in tqdm(df[prep_col]):
         tokens = word_tokenize(text)    
-        tokens = [
-            token for token in tokens 
-            if token not in stopwords_list and token != ' '
-            ]
+        tokens = [token for token in tokens if token != ' ']
         text = " ".join(tokens)
         sw_texts_list.append(text)
 
@@ -73,7 +58,7 @@ def get_removed_sw(df, prep_col, stopwords_list):
 def checkpoint_file(df, file_name): 
     return df.to_csv(file_name)
 
-def lemmatize_text(df: pd.DataFrame, column_to_lemm: str, stopwords):
+def lemmatize_text(df: pd.DataFrame, column_to_lemm: str):
 
     mystem = Mystem() 
     lemm_texts_list = []
@@ -81,9 +66,7 @@ def lemmatize_text(df: pd.DataFrame, column_to_lemm: str, stopwords):
         try:
             text_lem = mystem.lemmatize(text)
             tokens = [
-                token for token in text_lem 
-                if token != ' ' and token not in stopwords
-                ]
+                token for token in text_lem if token != ' ']
             text = " ".join(tokens)
             lemm_texts_list.append(text)
         except Exception as e:
@@ -102,61 +85,111 @@ def loading_data(data_name: str) -> pd.DataFrame:
 
     return df 
 
+def remove_punctuation(text):
+    return ''.join(
+        [ch if ch not in string.punctuation else ' ' for ch in text]
+        )
+
+def remove_numbers(text):
+    return ''.join([i if not i.isdigit() else ' ' for i in text])
+
+def remove_multiple_spaces(text):
+	return re.sub(r'\s+', ' ', text, flags=re.I)
+
+def stop_words_deleting(df, prep_col, stopwords): 
+    """Deleting a whole stopwords with abbreviation checking"""
+
+    def delete_stop_words(text: str): 
+        text =' '.join(
+                [word.lower() for word in text.split() 
+                if (word.lower() not in stopwords) & 
+                (word not in string.punctuation)]
+            )
+        # text = remove_multiple_spaces(' '.join(
+        #     [word.lower() for word in text.split() 
+        #         if (not word.isupper())]))
+        return text
+    
+    without_sw = []
+    for text in df[prep_col]: 
+        without_sw.append(delete_stop_words(text))
+
+    return without_sw
+
+def residual_preprocess(df, col): 
+    residual = []
+    for text in df[col]: 
+        residual.append(
+            ' '.join([w for w in text.split() if len(w) not in (2, 3)])
+        )
+    return residual 
+
 def all_preprocessing(data_name: str, feature_columns: list):
 
     df = loading_data(data_name)
     features = [] # name of preprocessed columns to predict
 
     for num, feature_column in enumerate(feature_columns): 
-        # # Removing punctuation, numbers, multiple spaces:
-        # preproccessing = lambda text: (remove_multiple_spaces(
-        #     remove_numbers(remove_punctuation(text))
-        #     ))
-        # # Adding column in initial table: 
-        # df[f'preproccessed_{num}'] = list(map(
-        #     preproccessing, df[feature_column]
-        #     ))
 
-        # Prep for next steps: 
+        # Removing multiple spaces, numbers & punct: 
         prep_text = [
             remove_multiple_spaces(
             remove_numbers(
-            remove_punctuation(text.lower())))
+            remove_punctuation(text)))
             for text in tqdm(df[feature_column])
             ]
         df[f'prep_text_{num}'] = prep_text
 
         stemmer = SnowballStemmer("russian") 
         russian_stopwords = stopwords.words("russian")
-        russian_stopwords.extend(['•', '…', '«', '»', '...', 'т.д.', 'т', 'д'])
+        russian_stopwords.extend(
+            ['•', '…', '«', '»', '...', 'т.д.', 'т', 'д', 'так', 
+             'нон', 'сыр', 'сур', 'сол', 'мг', 'доз', 'бет', 
+             '-', '№', '—'
+             ]
+            )
+        
+        # Cyrillic and latin single characters: 
+        a = ord('а')
+        cyrillic = [chr(i) for i in range(a,a+32)]
+        latin = list(string.ascii_lowercase)
 
-        # Text stemming: 
-        df[f'text_stem_{num}'] = stemm_text(
+        russian_stopwords.extend(cyrillic)
+        russian_stopwords.extend(latin)
+
+        df[f'deleted_sw{num}'] = stop_words_deleting(
             df=df, 
-            column_to_stem=f'prep_text_{num}', 
-            stopwords_list=russian_stopwords,
-            stemmer=stemmer
-            )
-        
-        # Text removing stop words: 
-        df[f'text_sw_{num}'] = get_removed_sw(
-            df=df, prep_col=f'text_stem_{num}', 
-            stopwords_list=russian_stopwords
-            )
-        
-        df[f'lemm_{num}'] = lemmatize_text(
-            df=df,
-            column_to_lemm=f'text_sw_{num}', 
+            prep_col=f'prep_text_{num}', 
             stopwords=russian_stopwords
-        )
+            )
         
-        features.append(f'text_sw_{num}')
+        df[f'deleted_sw{num}'] = residual_preprocess(
+            df=df, col=f'deleted_sw{num}'
+            )
+
+        # # Text stemming: 
+        # df[f'text_stem_{num}'] = stemm_text(
+        #     df=df, 
+        #     col=f'deleted_sw{num}', 
+        #     stemmer=stemmer)
+        
+        # Tokenizing: 
+        df[f'text_tok_{num}'] = word_tokenizing(
+            df=df, prep_col=f'deleted_sw{num}'
+            )
+        
+        # df[f'lemm_{num}'] = lemmatize_text(
+        #     df=df,
+        #     column_to_lemm=f'text_sw_{num}'
+        # )
+        
+        features.append(f'text_tok_{num}')
+        # features.append(f'lemm_{num}')
 
     # ============================== CHECKPOINT =============================
     saved = checkpoint_file(df=df, file_name='data_stemmed.csv')
     # =======================================================================
     
-    # Lemmatized column only: 
     return df, features 
 
 
