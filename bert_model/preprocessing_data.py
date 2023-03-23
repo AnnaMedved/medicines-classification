@@ -78,7 +78,7 @@ def loading_data(data_name: str) -> pd.DataFrame:
     """Check and load your data"""
 
     if data_name.endswith('.xlsx'): 
-        df = pd.read_excel(data_name)
+        df = pd.read_excel(data_name, engine='openpyxl')
 
     elif data_name.endswith('.csv'): 
         df = pd.read_csv(data_name)
@@ -145,7 +145,7 @@ def all_preprocessing(data_name: str, feature_columns: list):
         russian_stopwords.extend(
             ['•', '…', '«', '»', '...', 'т.д.', 'т', 'д', 'так', 
              'нон', 'сыр', 'сур', 'сол', 'мг', 'доз', 'бет', 
-             '-', '№', '—'
+             '-', '№', '—', ' « ', ' » '
              ]
             )
         
@@ -157,14 +157,14 @@ def all_preprocessing(data_name: str, feature_columns: list):
         russian_stopwords.extend(cyrillic)
         russian_stopwords.extend(latin)
 
-        df[f'deleted_sw{num}'] = stop_words_deleting(
+        df[f'deleted_sw_{num}'] = stop_words_deleting(
             df=df, 
             prep_col=f'prep_text_{num}', 
             stopwords=russian_stopwords
             )
         
-        df[f'deleted_sw{num}'] = residual_preprocess(
-            df=df, col=f'deleted_sw{num}'
+        df[f'deleted_sw_{num}'] = residual_preprocess(
+            df=df, col=f'deleted_sw_{num}'
             )
 
         # # Text stemming: 
@@ -174,16 +174,16 @@ def all_preprocessing(data_name: str, feature_columns: list):
         #     stemmer=stemmer)
         
         # Tokenizing: 
-        df[f'text_tok_{num}'] = word_tokenizing(
-            df=df, prep_col=f'deleted_sw{num}'
-            )
+        # df[f'text_tok_{num}'] = word_tokenizing(
+        #     df=df, prep_col=f'deleted_sw{num}'
+        #     )
         
         # df[f'lemm_{num}'] = lemmatize_text(
         #     df=df,
         #     column_to_lemm=f'text_sw_{num}'
         # )
         
-        features.append(f'text_tok_{num}')
+        features.append(f'deleted_sw_{num}')
         # features.append(f'lemm_{num}')
 
     # ============================== CHECKPOINT =============================

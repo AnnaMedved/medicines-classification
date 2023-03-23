@@ -4,7 +4,7 @@ from transformers import BertTokenizer, BertForSequenceClassification
 from torch.utils.data import Dataset, DataLoader
 from transformers import AdamW, get_linear_schedule_with_warmup, AutoTokenizer, AutoModelForPreTraining
 
-from bert_model.bert_dataset import CustomDataset
+from bert_dataset import CustomDataset
 
 class BertClassifier:
 
