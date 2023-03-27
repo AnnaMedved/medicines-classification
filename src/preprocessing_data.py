@@ -119,11 +119,16 @@ def all_preprocessing(data_name: str, feature_columns: list,
 
     df = loading_data(data_name)
     # df = df.loc[:, feature_columns.extend('Подуровень')]
-    feature1, feature2 = feature_columns[0], feature_columns[1]
-    df[feature1] = df[feature1] + df[feature2]
-    feature_column = feature1
 
-        # Removing multiple spaces, numbers & punct: 
+    if len(feature_columns) == 2: 
+        feature1, feature2 = feature_columns[0], feature_columns[1]
+        df[feature1] = df[feature1] + df[feature2]
+        feature_column = feature1
+    elif len(feature_columns) == 1: 
+        feature_column = feature_columns[0]
+    elif isinstance(feature_columns, 'str'): 
+        feature_column = feature_columns
+
     prep_text = [
         remove_multiple_spaces(
         remove_numbers(
