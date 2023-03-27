@@ -178,8 +178,8 @@ def all_preprocessing(data_name: str, feature_columns: list,
     df['text_lemm'] = lemm_texts_list
         
     # ============================== CHECKPOINT =============================
-    if not os.path.exists(new_data_name): 
-        checkpoint_file(df=df, file_name=new_data_name)
+    # if not os.path.exists(new_data_name): 
+    # checkpoint_file(df=df, file_name=new_data_name)
     # =======================================================================
     
     # return tokenizer, train_encodings, val_encodings, y_train, y_test
