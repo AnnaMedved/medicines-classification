@@ -11,7 +11,7 @@ from nltk.corpus import stopwords
 nltk.download("stopwords")
 nltk.download('punkt')
 
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
 from tqdm.auto import tqdm
 from nltk.stem import *
 from nltk.corpus import stopwords
@@ -53,7 +53,7 @@ def remove_multiple_spaces(text):
 def stop_words_deleting(df: pd.DataFrame, prep_col: str): 
     """Deleting a whole stopwords with abbreviation checking"""
 
-    def delete_stop_words(text: str, stopwords): 
+    def delete_stop_words(text: str, stopwords=russian_stopwords): 
         text =' '.join(
                 [word.lower() for word in text.split() 
                 if (word.lower() not in stopwords) & 
@@ -120,6 +120,6 @@ def all_preprocessing(data_name: str, feature_columns: list,
     )
 
         
-    df['text_lemm'] = lemm_texts_list
+    # df['text_lemm'] = lemm_texts_list
     
     return df

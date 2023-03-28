@@ -22,7 +22,7 @@ def all_predictions(df: pd.DataFrame, new_data_name: str, feature_column: list):
         return [num for num, pr in enumerate(pred) if pr == pr_max][0] + 1 
     
     
-    if len(feature_column) => 2: 
+    if len(feature_column) >= 2: 
         pred_df = df.loc[:, feature_column]
     elif len(feature_column) == 1: 
         pred_df = df.loc[:, feature_column[0]]
