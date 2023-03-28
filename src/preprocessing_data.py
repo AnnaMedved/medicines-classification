@@ -53,13 +53,13 @@ def remove_multiple_spaces(text):
 def stop_words_deleting(df: pd.DataFrame, prep_col: str): 
     """Deleting a whole stopwords with abbreviation checking"""
 
-    def delete_stop_words(text: str, stopwords=russian_stopwords): 
-        text =' '.join(
-                [word.lower() for word in text.split() 
-                if (word.lower() not in stopwords) & 
-                (word not in string.punctuation)]
-            )
-        return text
+    # def delete_stop_words(text: str, stopwords): 
+    #     text =' '.join(
+    #             [word.lower() for word in text.split() 
+    #             if (word.lower() not in stopwords) & 
+    #             (word not in string.punctuation)]
+    #         )
+    #     return text
     
     russian_stopwords = stopwords.words("russian")
     russian_stopwords.extend(
@@ -76,7 +76,11 @@ def stop_words_deleting(df: pd.DataFrame, prep_col: str):
     russian_stopwords.extend(cyrillic)
     russian_stopwords.extend(latin)
 
-    without_sw = df[prep_col].map(delete_stop_words)
+    without_sw = df[prep_col].map(lambda text: ' '.join(
+                [word.lower() for word in text.split() 
+                if (word.lower() not in russian_stopwords) & 
+                (word not in string.punctuation)]
+            ))
     return without_sw
 
 def residual_preprocess(df: pd.DataFrame, col: str): 
