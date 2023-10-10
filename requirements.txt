@@ -1,9 +1,9 @@
-torch==1.8.1
-sentencepiece==0.1.95
+torch
+sentencepiece
 transformers
-pandas==1.1.5
-numpy==1.19.5
-scikit-learn==0.22.2
+pandas
+numpy
+scikit-learn
 xlrd
 nltk
 pymystem3
